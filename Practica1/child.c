@@ -11,7 +11,7 @@ volatile __sig_atomic_t interruption = 0;
 
 void signalHandler(int sigReceived)
 {
-    printf("INTERRUPCION CON CTRL C");
+    printf("\nINTERRUPCION CON CTRL C\n");
     interruption = 1;
 }
 
@@ -31,7 +31,7 @@ int main(int argc, char *argv[])
         if (randomFunc == 1)
         {
             // Escribir
-            printf("Escribir -> %s \n", argv[2]);
+            //printf("Escribir -> %s \n", argv[2]);
 
             char characters[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
             char destino[8] = "";
@@ -42,20 +42,19 @@ int main(int argc, char *argv[])
                 int randomPos = rand() % 62;
                 destino[i] = characters[randomPos];
             }
-            printf("%.*s\n", 8, destino);
             write(fileDescript, destino, 8);
         }
         else if (randomFunc == 2)
         {
             // Leer
-            printf("Leer -> %s \n", argv[2]);
+            //printf("Leer -> %s \n", argv[2]);
             char buf[8];
             read(fileDescript, buf, 8);
         }
         else if (randomFunc == 3)
         {
             // Seek
-            printf("Seek -> %s \n", argv[2]);
+            //printf("Seek -> %s \n", argv[2]);
             lseek(fileDescript, 0, SEEK_SET);
         }
         sleep(randomTime);

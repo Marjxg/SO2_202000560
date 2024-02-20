@@ -8,7 +8,6 @@
 #include <fcntl.h>
 #include <signal.h>
 
-
 int main(){
     //Creacion archivo para history
     int fd = open("syscalls.log", O_RDWR | O_CREAT, 0777);
@@ -62,14 +61,44 @@ int main(){
             if (monitor == 0){
                 char command[100];
                 sprintf(command, "%s %d %d %s", "sudo stap trace.stp", child1, child2, " > syscalls.log\n");
-                printf("%s", command);
                 system(command);
+            } else {
+                int statLoc3 = 0;;
+                waitpid(monitor, &statLoc3, 0);
+                kill(child1, SIGINT);
+                kill(child2, SIGINT);
+
+
+                char buff[1024];
+                char *action;
+                ssize_t bytes_read;
+                int readqty = 0;
+                int writeqty = 0;
+                int seekqty = 0;
+                int total = 0;
+                while ((bytes_read = read(fd, buff, sizeof(buff))) > 0) {
+                    char *ptr = buff;
+                    while ((action = strtok(ptr, "\n")) != NULL) {
+                        ptr = NULL;
+                        if (strstr(action, "read") != NULL) {
+                            readqty++;
+                        } else if (strstr(action, "write") != NULL) {
+                            writeqty++;
+                        } else if (strstr(action, "lseek") != NULL) {
+                            seekqty++;
+                        } 
+                        }
+                }
+                total = writeqty + readqty + seekqty;
+                printf("\n%s %d\n", "Total write: ", writeqty);
+                printf("%s %d\n", "Total read: ", readqty);
+                printf("%s %d\n", "Total seek: ", seekqty);
+                printf("%s %d\n", "Total: ", total);
+                //waitpid(child1, &statLoc1, 0);
+                //waitpid(child2, &statLoc2, 0);
             }
 
-            int statLoc1, statLoc2, statLoc3;
-            waitpid(child1, &statLoc1, 0);
-            waitpid(child2, &statLoc2, 0);
-            waitpid(monitor, &statLoc3, 0);
+            
         }
     }
     return 0;
