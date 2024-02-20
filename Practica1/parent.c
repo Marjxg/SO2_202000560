@@ -5,8 +5,18 @@
 #include <errno.h>
 #include <sys/wait.h>
 #include <fcntl.h>
+#include <signal.h>
+
+volatile sig_atomic_t interrupted = 0;
+
+void signalHandler(int signnum) {
+    printf("Se presiono Ctrl C\n");
+    interrupted = 1;
+}
+
 
 void main(){
+    signal(SIGINT, signalHandler);
 
     //Creacion archivo
     int fileDescript = open("practica1.txt", O_RDWR | O_CREAT, 0777);
@@ -48,27 +58,23 @@ void main(){
             execv("/home/mint/Documents/SO2_202000560/Practica1/child.bin", argPtr);
         } else {
 
-            int status;
-            wait(&status);
+            pid_t systemTap = fork();
+            if (systemTap == -1){
+                perror("fork");
+                exit(1);
+            }
 
-            if(WIFEXITED(status)){
-                printf("\nLos procesos hijos terminaron con estado = %d\n", WIFEXITED(status));
+            if (systemTap == 0){
+                char command[100];
+                sprintf(command, "%s %d %d %s", "sudo stap trace.stp", child1, child2, " > syscalls.log\n");
+                printf("%s", command);
+                system(command);
             } else {
-                printf("Ocurrio un error al terminar el proceso hijo 1\n");
+                int statLoc1, statLoc2, statLoc3;
+                waitpid(child1, &statLoc1, 0);
+                waitpid(child2, &statLoc2, 0);
+                waitpid(systemTap, &statLoc3, 0);
             }
         }
-
-        printf("Soy el proceso Padre\n");
-
-            int status;
-            wait(&status);
-
-            if(WIFEXITED(status)){
-                printf("\nLos procesos hijos terminaron con estado = %d\n", WIFEXITED(status));
-            } else {
-                printf("Ocurrio un error al terminar el proceso hijo 1\n");
-            }
-
-            printf("Terminando proceso padre \n");
     }
 }
