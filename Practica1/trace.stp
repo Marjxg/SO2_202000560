@@ -11,3 +11,9 @@ probe syscall.write {
         printf("%s(%d) %s\n",execname(), pid(), name)
     }
 }
+
+probe syscall.lseek {
+    if(pid() == $1 || pid() == $2){
+        printf("%s(%d) %s\n",execname(), pid(), name)
+    }
+}

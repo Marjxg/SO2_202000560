@@ -4,21 +4,15 @@
 #include <unistd.h>
 #include <errno.h>
 #include <sys/wait.h>
+#include <sys/stat.h>
 #include <fcntl.h>
 #include <signal.h>
 
-volatile sig_atomic_t interrupted = 0;
 
-void signalHandler(int signnum) {
-    printf("Se presiono Ctrl C\n");
-    interrupted = 1;
-}
-
-
-void main(){
-    signal(SIGINT, signalHandler);
-
-    //Creacion archivo
+int main(){
+    //Creacion archivo para history
+    int fd = open("syscalls.log", O_RDWR | O_CREAT, 0777);
+    //Creacion archivo para child
     int fileDescript = open("practica1.txt", O_RDWR | O_CREAT, 0777);
     close(fileDescript);
 
@@ -58,23 +52,25 @@ void main(){
             execv("/home/mint/Documents/SO2_202000560/Practica1/child.bin", argPtr);
         } else {
 
-            pid_t systemTap = fork();
-            if (systemTap == -1){
+            pid_t monitor = fork();
+            
+            if (monitor == -1){
                 perror("fork");
                 exit(1);
             }
 
-            if (systemTap == 0){
+            if (monitor == 0){
                 char command[100];
                 sprintf(command, "%s %d %d %s", "sudo stap trace.stp", child1, child2, " > syscalls.log\n");
                 printf("%s", command);
                 system(command);
-            } else {
-                int statLoc1, statLoc2, statLoc3;
-                waitpid(child1, &statLoc1, 0);
-                waitpid(child2, &statLoc2, 0);
-                waitpid(systemTap, &statLoc3, 0);
             }
+
+            int statLoc1, statLoc2, statLoc3;
+            waitpid(child1, &statLoc1, 0);
+            waitpid(child2, &statLoc2, 0);
+            waitpid(monitor, &statLoc3, 0);
         }
     }
+    return 0;
 }

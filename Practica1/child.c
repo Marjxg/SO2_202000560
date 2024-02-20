@@ -7,49 +7,59 @@
 #include <time.h>
 #include <fcntl.h>
 
-void main(int argc, char *argv[]){
-    srand(time(NULL) + getpid());
-    int randomFunc = rand() % 3 + 1;
-    int randomTime = rand() % 3 + 1;
+volatile __sig_atomic_t interruption = 0;
+
+void signalHandler(int sigReceived)
+{
+    printf("INTERRUPCION CON CTRL C");
+    interruption = 1;
+}
+
+int main(int argc, char *argv[])
+{
+    // Abrir archivo
     int fileDescript = open("practica1.txt", O_WRONLY);
+    srand(time(NULL) + getpid());
+    // Senal
+    signal(SIGINT, signalHandler);
 
-    if (randomFunc == 1){
-        //Escribir
-        printf("Escribir -> %s \n", argv[2]);
+    while (!interruption)
+    {
+        int randomFunc = rand() % 3 + 1;
+        int randomTime = rand() % 3 + 1;
 
-        char characters[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-        char destino[8] = "";
-        srand(time(NULL));
+        if (randomFunc == 1)
+        {
+            // Escribir
+            printf("Escribir -> %s \n", argv[2]);
 
-        for (size_t i = 0; i < 8; i++) {
-            int randomPos = rand() % 62;
-            destino[i] = characters[randomPos];
+            char characters[] = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            char destino[8] = "";
+            srand(time(NULL));
+
+            for (size_t i = 0; i < 8; i++)
+            {
+                int randomPos = rand() % 62;
+                destino[i] = characters[randomPos];
+            }
+            printf("%.*s\n", 8, destino);
+            write(fileDescript, destino, 8);
         }
-        printf("%.*s\n", 8, destino);
-
-        const void *ptr = (const void *)destino;
-        write(fileDescript, ptr, strlen("abcdefgh"));
-        sleep(randomTime);
-
-    } else if (randomFunc == 2){
-        //Leer
-        printf("Leer -> %s \n", argv[2]);
-        char buf[8];
-        ssize_t nBytes; // Cambio a ssize_t para manejar valores negativos de retorno
-        nBytes = read(fileDescript, buf, sizeof(buf) - 1); // Leer hasta sizeof(buf) - 1 bytes
-        if (nBytes >= 0) {
-            buf[nBytes] = '\0'; // Agregar terminador nulo al final del buffer
-            printf("Bytes leídos: %ld, Contenido: %s\n", nBytes, buf);
-        } else {
-            perror("read"); // Mostrar error si la lectura falla
+        else if (randomFunc == 2)
+        {
+            // Leer
+            printf("Leer -> %s \n", argv[2]);
+            char buf[8];
+            read(fileDescript, buf, 8);
         }
-        sleep(randomTime);
-        
-    } else if (randomFunc == 3){
-        //Seek
-        printf("Seek -> %s \n", argv[2]);
-        write(fileDescript, "12345678", strlen("12345678"));
-        lseek(fileDescript, 0, SEEK_SET);
+        else if (randomFunc == 3)
+        {
+            // Seek
+            printf("Seek -> %s \n", argv[2]);
+            lseek(fileDescript, 0, SEEK_SET);
+        }
         sleep(randomTime);
     }
+
+    return 0;
 }
