@@ -7,13 +7,13 @@
 #include <fcntl.h>
 
 void main(){
+
     //Creacion archivo
     int fileDescript = open("practica1.txt", O_RDWR | O_CREAT, 0777);
     close(fileDescript);
 
     //Creacion primer proceso hijo
     pid_t child1 = fork();
-    int pid1 = child1;
 
     if (child1 == -1){
         perror("fork");
@@ -29,14 +29,8 @@ void main(){
 
         execv("/home/mint/Documents/SO2_202000560/Practica1/child.bin", argPtr);
     } else {
-        pid_t child2 = fork();
-        int pid2 = child2;
 
-        printf("PIDS %d %d\n", pid1, pid2);
-            char command[100];
-            sprintf(command, "%s %d %d %s", "sudo stap trace.stp", pid1, pid2, " > syscalls.log");
-            printf("%s \n", command);
-            system(command);
+        pid_t child2 = fork();
 
         if (child2 == -1){
             perror("fork");
